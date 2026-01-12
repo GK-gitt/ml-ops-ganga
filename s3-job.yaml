@@ -1,0 +1,14 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: s3-uploader-execution
+spec:
+  template:
+    spec:
+      containers:
+      - name: s3-uploader
+        # Unga ECR URI-a inga replace pannunga (The one we pushed earlier)
+        image: 708750714166.dkr.ecr.us-east-1.amazonaws.com/s3-uploader:v2
+        imagePullPolicy: Always
+      restartPolicy: Never
+  backoffLimit: 2

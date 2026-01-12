@@ -1,0 +1,9 @@
+# Ignore executables
+*.exe
+
+# Ignore zip files
+*.zip
+
+# Ignore local workspace files
+*.code-workspace
+
