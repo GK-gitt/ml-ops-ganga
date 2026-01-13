@@ -6,7 +6,7 @@ s3 = boto3.client('s3')
 
 # 2. Settings (Change these to your names)
 bucket_name = 'mlops-s3-bucket-ganga-aws' # Unga bucket name kudunga
-folder_path = r'C:\Users\KanagarajG\Documents\ML_Ops_Ganga'     # Unga laptop-la irukkura folder path
+folder_path = './'     # Unga laptop-la irukkura folder path
 
 # 3. Create the folder if it doesn't exist (Testing-kku)
 if not os.path.exists(folder_path):
