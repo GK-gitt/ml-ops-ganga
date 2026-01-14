@@ -51,7 +51,7 @@ jobs:
           aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ needs.build-and-push.outputs.registry }}
           
           # 2. Pull the latest image
-          docker pull ${{ 708750714166.dkr.ecr.us-east-1.amazonaws.com/s3-uploader }}/s3-uploader:latest
+          docker pull 708750714166.dkr.ecr.us-east-1.amazonaws.com/s3-uploader:latest
           
           # 3. Stop and Remove old container (|| true handles the "Fresh" setup case)
           docker stop s3-uploader || true
@@ -59,4 +59,4 @@ jobs:
           
           # 4. Run the new container
           # Mapping Port 80 of EC2 to Port 8000 of your App
-          docker run -d --name s3-uploader -p 80:8000 ${{ 708750714166.dkr.ecr.us-east-1.amazonaws.com/s3-uploader }}/s3-uploader:latest
+          docker run -d --name s3-uploader -p 80:8000 708750714166.dkr.ecr.us-east-1.amazonaws.com/s3-uploader:latest
