@@ -1,12 +1,14 @@
-name: Build and Push to ECR
+name: Build and Push to ECR then Deploy to EC2
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
+    outputs:
+      registry: ${{ steps.login-ecr.outputs.registry }}
     steps:
     - name: Checkout Code
       uses: actions/checkout@v3
@@ -23,6 +25,7 @@ jobs:
       uses: aws-actions/amazon-ecr-login@v1
 
     - name: Build, Tag, and Push Image to ECR
+      id: build-image
       env:
         ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         ECR_REPOSITORY: s3-uploader
@@ -30,3 +33,30 @@ jobs:
       run: |
         docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
         docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+    - name: SSH into EC2 and Deploy
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_IP }}
+        username: ubuntu
+        key: ${{ secrets.EC2_PRIVATE_KEY }}
+        script: |
+          # 1. Login to ECR inside EC2
+          aws configure set aws_access_key_id ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws configure set aws_secret_access_key ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ needs.build-and-push.outputs.registry }}
+          
+          # 2. Pull the latest image
+          docker pull ${{ needs.build-and-push.outputs.registry }}/s3-uploader:latest
+          
+          # 3. Stop and Remove old container (|| true handles the "Fresh" setup case)
+          docker stop s3-uploader || true
+          docker rm s3-uploader || true
+          
+          # 4. Run the new container
+          # Mapping Port 80 of EC2 to Port 8000 of your App
+          docker run -d --name s3-uploader -p 80:8000 ${{ needs.build-and-push.outputs.registry }}/s3-uploader:latest
